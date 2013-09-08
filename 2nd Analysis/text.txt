@@ -1,0 +1,146 @@
+Title: Among individuals with the same FICO Score Increased Interest Rate is associated with increased Loan Length and increased Amount Funded/Requested.
+
+Introduction:
+Loans today are a very common case. And the most important detail in every loan which makes it attractive (or not) is interest rate. 
+The main variable in US for determining that rate was and still is a FICO Score [1]. 
+This particular analysis was performed in order to find confounders impacting the final rate of interest 
+and also to devise some measure of association between FICO Score and interest rate.
+Using exploratory analysis and standard multiple regression techniques it is shown that there is a 
+significant negative relationship between them, even after adjusting for important confounders - the length of the loan(measured in months), amount requested and amount funded (in dollars).
+
+Methods:
+
+Data Collection
+
+The data used for analysis consist of a sample of 2,500 peer-to-peer loans issued through the Lending Club [2]
+(the data can be obtained here [3]) The data were downloaded using the R programming language [4].   
+
+Exploratory Analysis 
+ 
+Exploratory analysis was performed by examining tables, histograms and plots of the observed data. I 
+identified transformations to perform on the raw data on the basis of plots and knowledge of the 
+scale of measured variables. Exploratory analysis was used to (1) identify missing values, (2) 
+verify the quality of the data, and (3) determine the terms used in the regression model relating 
+Loans Interest Rate to FICO Score of the loanee.
+
+Statistical Modeling 
+ 
+To relate loans interest rate to FICO score I performed a standard multivariate 
+linear regression model [5]. Model selection was performed on the basis of my exploratory 
+analysis. Coefficients were estimated with ordinary least squares and standard errors were 
+calculated using standard asymptotic approximations  [6].
+
+Reproducibility 
+ 
+All analyses performed in this manuscript are reproduced in the R markdown file 
+LInterestFinal.Rmd [7].
+
+
+
+Results:
+The loans data used in the analysis contains information on the variety of variables described here [8]
+
+I identified several missing values in two entries, they laid inside standard ranges and were removed. 
+Several outliers in FICO Score were detected, however they didn't show any specific patterns when compared on other features, were removed.
+After described procedures the set consisted of 2485 entries.
+
+Based on the distributions of interest rate (fig. 1 top-left panel) and FICO score(80% were less than (max+min)/2), both were heavily right-skewed, I decided a transform was necessary.
+ log2 and log10 transforms were performed accordingly. Subsequent analyses focus on those transformed variables.
+
+After fitting a regression model relating FICO Score and interest rate (fig. 1 top-right panel) the residuals showed
+ some non-random variation patterns. Variables amount requested, amount funded by investors and loan length had non-random distributions. 
+ After including loan length and amount requested into regression model the non-random patterns of other variables disappeared.
+ (I omitted amount funded due to heavy correlation with amount requested, cor. coeff. = 0.97)
+Final regression model (fig.1 bottom panels): 
+log2(Interest.Rate)  = b0  + b1*log10(FICO Score) + b2*(Amount.Requested) + f(Loan.Length) + e  
+Where b0 is an intercept term for loan length of 36 months, f + b0 intercept for 60 months and b1 is representing the change in interest rate   
+associated with a change (multiplication by 2 for every) corresponding 1 unit in log base 10 units of FICO Score for loans with all other parameters equal. 
+b2 represents the change in interest rate associated with a change (multiplication by 2 for every) corresponding to 1 unit in dollars of Amount Requested for loans with all other parameters equal
+The error term e represents all sources of unmeasured and unmodeled random variation in interest rate. 
+The final regression model appeared to remove most of the non-random patterns of variation in the residuals.  
+	I observed a highly statistically significant (P = 2e-16) association between interest rate and FICO Score. 
+	A change of one unit in log base 10 units of FICO Score corresponded to a change of b1 = -1.912 percent in log base 2 in Interest Rate
+	(95% Confidence Interval: -1.96, -1.86). Also highly significant association was found between loan length and interest rate (P = 2e-16),
+	while all other parameters equal taking a loan for 60 months instead of 36 would mean 1.41 times increase in interest rate percentage.
+	Also there is a highly statistically significant (P = 2e-16) association between interest rate and amount reuested. 
+	A change of one dollar corresponded to a change of b2 = 1.6e-05 percent in log base 2 in Interest Rate
+	(95% Confidence Interval: 1.46e-05, 1.72e-05).
+
+Conclusions:  
+ 
+Analysis suggests that there is a significant, negative association between interst rate
+ and FICO Score. My analysis estimates the relationship using a linear model 
+relating log base 10 FICO Score to log base 2 loan interest rate. Therefore, estimated association is not linear. 
+Even so, there appears to be a strong relationship between the two variables. 
+I also observed another variables, and specifically loan length and amount requested (or alternatively amount funded) are associated with interest rate. Including these
+variables in the regression model relating interest rate to FICO Score improves the model fit, but does 
+not remove the significant negative relationship between the variables.  
+ 
+While my analysis is an interesting peek it is based on a limited sample of 2,500 peer-to-peer loans issued through one agency [2].
+A larger collection of representative loans may be more appropriate for understanding the relationship between interest rate
+ and other variables among the loanees with same FICO Score. My analysis may be of interest to general population seeking to 
+ better understand loan market. But further analysis needs to be performed in this specific area to give any definite conclusions.
+
+
+References:
+1. FICO Credit Score. URL: 
+http://en.wikipedia.org/wiki/Credit_score_in_the_United_States
+2. Lending Club. URL: https://www.lendingclub.com/home.action
+3. https://spark-public.s3.amazonaws.com/dataanalysis/loansData.rda
+4. R Core Team (2012). ”R: A language and environment for statistical computing.” URL: 
+http://www.R - project.org
+5. Seber, George AF, and Alan J.   Lee. Linear regression analysis . Vol. 936. Wiley, 2012.  
+6. Ferguson, Thomas S.  A Course in Large Sample Theory: Texts in Statistical Science. Vol.  38. 
+Chapman & Hall/CRC, 1996.
+7. R Markdown Page. URL: http://www.rstudio.com/ide/docs/authoring/using_markdown
+Accessed 2/15/2013
+8. Code book for the variables in the data set used. URL: https://spark-public.s3.amazonaws.com/dataanalysis/loansCodebook.pdf
+
+
+cx = 1.3
+## Save figure to pdf file
+pdf(file = "./finalfigure.pdf", height = 4*2, width = 2 * 4)
+mypar(mfrow = c(2, 2))
+hist(loansData$Interest.R, breaks = 100, col = 1, xlab = "Interest Rate (%)", ylab = "Frequency", 
+    main = "", cex.axis = cx, cex.lab = cx)
+
+plot(jitter(log10(as.numeric(loans2$FICO.Range))), lm1$residuals, col = as.factor(loans2$Loan.Length), pch = 19, 
+xlab = "Log Base 10 FICO Score", ylab = "No Adjustment Residuals", cex.axis = cx, cex.lab = cx)
+legend("bottomleft", c("36 months", "60 months"), pch= 19, col = c(2,3))
+
+plot(jitter(log10(as.numeric(loans2$FICO.Range))), lm3$residuals, col = as.factor(loans2$Loan.Length), pch = 19, 
+xlab = "Log Base 10 FICO Score", ylab = "Full Model Residuals", cex.axis = cx, cex.lab = cx)
+legend("bottomleft", c("36 months", "60 months"), pch= 19, col = c(2,3))
+
+
+bomo = function(vb){paste(vb,"$", sep="")}
+mon = lapply(levels(cut(loans2$Amount.Requested, breaks = 4)),bomo)
+plot(jitter(log10(as.numeric(loans2$FICO.Range))), lm3$residuals, col = cut(loans2$Amount.Requested, breaks = 4), pch = 19, 
+xlab = "Log Base 10 FICO Score", ylab = "Full Model Residuals", cex.axis = cx, cex.lab = cx)
+legend("bottomleft", legend=mon, pch= 19, col = unique(cut(loans2$Amount.Requested, breaks = 4)))
+dev.off()
+
+
+
+
+
+
+Figure 1   Top-Left Panel  A histogram of the interest rate of the loans. The distribution is 
+right skewed and so a log base 2 transform is used for the rest of the analysis.  
+Top-Right Panel   Residuals from a linear model relating log base 2 interest rate to log base 10 FICO Score, 
+coloured by loan length. The points are colour-separated, some non-linearity at the right bottom.  
+Bottom Panels. A lot of the residuals from a linear model relating log base 2 interest rate to log base 10 FICO Score adjusted for 2 - level 
+factor variable for loan lebgth, and continuous variable of amount requested. The residuals are colored by loan length and amount requested 
+groups accordingly. Most of the patterns observed in the original residuals have been eliminated.  
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,132 @@
+Title:
+
+Prediction of actions performed by owners of Samsung mobile phones performed solely on the gyroscope readings.
+
+
+
+Introduction:
+
+
+
+ With advance of technology almost anybody nowadays has a tiny gyroscope[2.1] and an accelerometer[2.2] in their pocket located inside a smartphone.
+
+This particular analysis was performed in order to find out whether we would be able (with some amount of cunning and mischief) predict actions of a person who has a Samsung[1] smart phone with them. Using exploratory and predictive analyses and PCA and Random Forests it is shown that such predictions can be made with quite strong amount of confidence.
+
+ 
+
+Methods:
+
+
+
+Data Collection
+
+The data used for analysis consist of a sample of 7345 gyroscope[2.1] and accelerometer [2.2] measurements of 30 volunteers [3] (the slightly processed data can be obtained here [4]) The data were downloaded using the R programming language [5].
+
+Exploratory Analysis
+
+Exploratory analysis was performed by examining tables, histograms and plots of the observed data. I identified main variance-influincing variables using PCA algorithm[6]. Exploratory analysis was used to (1) identify missing values, (2) verify the quality of the data, and (3) determine the terms used in the model relating activity of a subject to gyroscope data.
+
+Statistical Modeling
+
+To relate activity performed by a person to measurements I grew a standard random forest[7] and performed multivariate linear regression model [8]. Model selection was performed on the basis of the model performance using accuracy of classification.
+
+Reproducibility
+
+All analyses performed in this manuscript are reproduced in the R markdown file 
+Samsung.Rmd [9].
+
+ 
+
+Results:
+
+
+The data set initially consisted of 563 variables, last two of which were No of the subject and activity performed by the subject at the time.
+
+Other variables depicted various readings of the accelerometer and gyroscope, such ass coordinate acceleration, speed, energy etc. (full list available here [3])
+
+Variables included symbols "-", "(", ")", ",", which are special characters in R so substitution to "_" was performed.
+
+Subjects 27-30 were chosen to be the test set, all others were left in training set.
+
+Concretely:
+          training set: 5867 samples
+          test Set: 1485
+
+Lots of missing values were detected(solution in the next paragraph). Also some variable name duplications were found (solution in the next paragraph).
+
+Due to the lack of expertise in the particular field I performed PCA and chose first 66 components which preserved >95% of the variance(fig 1 shows the first U component), then I took only unique variables which resulted in 45 variables. Also successfully removing all of the potential confounders and name duplications, because other variables contributed to less than 0.2% of variance individually. Further inspection showed no missing values.
+
+After fitting a linear regression model relating variables and activity the results on test set showed only 77% of accuracy(percent correct). But some p-values suggested that some of the variables would not matter while making a decision, so those variables whose p-values were higher than 0.05 were rejected (namely most of the Body Jerk coefficients and variables involving those) leaving 29 variables.
+
+Then I grew a random forest with the adjusted formula(fig 2 shows edges between variables using proximity matrix[12] formed by a forest). Results shown in this confusion matrix[10]:
+
+            laying  sitting standing   walk walkdown  walkup   class.error
+laying    1086       19             8        1              0           0   0.02513465
+sitting        32     924           66        0              0           0   0.09589041
+standing      2       75       1013        0              1           0   0.07149404
+walk            0         0             0     973            12         12  0.02407222
+walkdow      0         0             0        3           776          7   0.01272265
+walkup         0         0             0      12              8       837  0.02333722
+
+And the forest's own OOB estimate[11] was 4.4% and erroneus classifications on test set were 8% using incorrect to overall ratio.
+
+Final regression model:
+
+Activity  = f(sum (k_i)) + e
+
+Where k_i is representing the change in one of the 29 variables (we may assume any ordering due to the commutativity of the summation operation) filtered through some non-linear function f (learned by the random forest) associated with a change corresponding to 1 position in factor of this particular ordering: ("laying", "sitting", "standing", "walk", "walkdown", "walkup") with all other parameters equal.
+
+The error term e represents all sources of unmeasured and unmodeled random variation in data.
+
+Then to check how well this careful selection would fare against just plainly including all the variables I grew a random forest based on activity vs all formula and got slightly better results (6% vs 8%) but training time was significantly longer.
+
+ 
+
+Conclusions: 
+
+
+
+Analysis suggests that there is a significant probability of succesfull prediction based solely on mobile phone accelerometer amd gyroscope readings. My analysis predicts correct results using random forest  92% of the time on unseen data. Which is quite good.
+
+While achieving high prediction rate, the reasoning behind decisions of the applied model is hard to interpret, other algorithms should be used for clearer interpretability. Or, alternatively, further analysis of the inner structure needs to be performed in order to derive some underlying factors (for people to be able to predict solely on the phone readings), but it seems redundant if a machine can do what it needs to do and does it well.
+
+
+References:
+
+1. Samsung Company. 
+URL: www.samsung.com/
+
+2.1 Gyroscope. 
+URL: http://en.wikipedia.org/wiki/Gyroscope
+
+2.2 Accelerometer
+URL:http://en.wikipedia.org/wiki/Accelerometer
+
+3. Human Activity Recognition Using Smartphones Data Set.
+URL: http://archive.ics.uci.edu/ml/datasets/Human+Activity+Recognition+Using+Smartphones
+
+4. https://spark-public.s3.amazonaws.com/dataanalysis/samsungData.rda
+
+5. R Core Team (2012). ”R: A language and environment for statistical computing.” 
+URL: http://www.R-project.org
+
+6. Principal component analysis.
+URL: http://en.wikipedia.org/wiki/Principal_component_analysis
+
+7. Breiman, Leo (2001). "Random Forests". Machine Learning 45 (1): 5–32. doi:10.1023/A:1010933404324
+
+8. Seber, George AF, and Alan J.  Lee. Linear regression analysis . Vol. 936. Wiley, 2012. 
+
+9. R Markdown Page. 
+URL: http://www.rstudio.com/ide/docs/authoring/using_markdown
+Accessed 2/15/2013
+
+10. Confusion matrix.
+URL: http://en.wikipedia.org/wiki/Confusion_matrix
+
+11. Out of Bag error estimate.
+URL: http://stat-www.berkeley.edu/users/breiman/RandomForests/cc_home.htm#ooberr
+
+12. Random Forest R Implementation Notes. Concretely Proximity Matrix p.2 and MDSPlot p.9
+
+URL: http://cran.r-project.org/web/packages/randomForest/randomForest.pdf 
